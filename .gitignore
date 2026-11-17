@@ -11,3 +11,4 @@ config/backups/
 config/.HA_VERSION
 config/www/snapshots/*.jpg
 __pycache__/
+config/custom_components/

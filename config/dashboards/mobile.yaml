@@ -28,9 +28,9 @@ views:
             state_content: [hvac_action, current_temperature]
             grid_options: { columns: 6 }
           - type: tile
-            entity: vacuum.robot
+            entity: vacuum.narwal
             name: 扫地机
-            state_content: [state, battery_level]
+            state_content: state
             grid_options: { columns: 6 }
 
       - type: grid
@@ -67,7 +67,7 @@ views:
             tap_action:
               action: perform-action
               perform_action: vacuum.start
-              target: { entity_id: vacuum.robot }
+              target: { entity_id: vacuum.narwal }
             grid_options: { columns: 4, rows: 2 }
           - type: button
             name: 扫地机回充
@@ -75,7 +75,7 @@ views:
             tap_action:
               action: perform-action
               perform_action: vacuum.return_to_base
-              target: { entity_id: vacuum.robot }
+              target: { entity_id: vacuum.narwal }
             grid_options: { columns: 4, rows: 2 }
           - type: button
             name: 加热 1 小时
@@ -148,10 +148,10 @@ views:
     icon: mdi:robot-vacuum
     cards:
       - type: tile
-        entity: vacuum.robot
+        entity: vacuum.narwal
         name: 扫地机器人
         vertical: true
-        state_content: [state, battery_level]
+        state_content: state
         features:
           - type: vacuum-commands
             commands: [start_pause, stop, return_home, locate]
@@ -159,6 +159,8 @@ views:
         title: 清扫设置
         state_color: true
         entities:
+          - entity: sensor.narwal_battery
+            name: 电量
           - entity: input_boolean.vacuum_auto_clean
           - entity: input_datetime.vacuum_last_clean
           - entity: sensor.vacuum_hours_since_clean
@@ -167,7 +169,7 @@ views:
         title: 清扫记录
         hours_to_show: 72
         target:
-          entity_id: vacuum.robot
+          entity_id: vacuum.narwal
 
   # ---------------- 设置 ----------------
   - title: 设置

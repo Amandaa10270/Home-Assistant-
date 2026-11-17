@@ -7,8 +7,8 @@ homeassistant:
   name: 我的家
   unit_system: metric
   temperature_unit: C
-  time_zone: Asia/Shanghai          # 按实际所在地修改
-  country: CN
+  time_zone: America/New_York       # Syracuse, NY
+  country: US
   language: zh-Hans
   # 自动加载 packages 目录下的所有设备配置
   packages: !include_dir_named packages

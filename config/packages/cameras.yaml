@@ -1,6 +1,7 @@
 # ============================================================
-#  监控摄像头
-#  需要的实体：
+#  监控摄像头：CareCamPro
+#  通过 HA 官方「ONVIF」集成接入（见 README 第 3 步）
+#  需要的实体（接入后把实体 ID 改成下面的名字）：
 #    camera.front_door                门口摄像头
 #    camera.living_room               客厅摄像头
 #    binary_sensor.front_door_motion  门口移动侦测

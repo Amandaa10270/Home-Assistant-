@@ -1,7 +1,10 @@
 # ============================================================
-#  扫地机器人
-#  需要的实体（在 HA 里把设备实体 ID 改成下面的名字即可）：
-#    vacuum.robot              扫地机器人
+#  扫地机器人：Narwal 云鲸
+#  使用 HACS 社区集成「Narwal Local」（本地控制，无需云端账号）
+#    https://github.com/cvette/narwal-ha
+#  集成默认生成的实体（无需改名）：
+#    vacuum.narwal             扫地机器人
+#    sensor.narwal_battery     电量
 #  手机通知：notify.mobile_app_phone（见 README）
 # ============================================================
 
@@ -39,7 +42,7 @@ script:
     sequence:
       - action: vacuum.start
         target:
-          entity_id: vacuum.robot
+          entity_id: vacuum.narwal
 
   vacuum_go_home:
     alias: 扫地机回充
@@ -47,7 +50,7 @@ script:
     sequence:
       - action: vacuum.return_to_base
         target:
-          entity_id: vacuum.robot
+          entity_id: vacuum.narwal
 
 automation:
   # 离家后自动清扫（距上次清扫超过 20 小时，避免一天扫多次）
@@ -66,12 +69,12 @@ automation:
         entity_id: sensor.vacuum_hours_since_clean
         above: 20
       - condition: state
-        entity_id: vacuum.robot
+        entity_id: vacuum.narwal
         state: docked
     actions:
       - action: vacuum.start
         target:
-          entity_id: vacuum.robot
+          entity_id: vacuum.narwal
       - action: notify.mobile_app_phone
         data:
           title: 🧹 扫地机器人
@@ -86,19 +89,19 @@ automation:
         to: 在家
     conditions:
       - condition: state
-        entity_id: vacuum.robot
+        entity_id: vacuum.narwal
         state: cleaning
     actions:
       - action: vacuum.return_to_base
         target:
-          entity_id: vacuum.robot
+          entity_id: vacuum.narwal
 
   # 清扫完成 → 记录时间并推送通知
   - id: vacuum_finished
     alias: 扫地机 - 清扫完成通知
     triggers:
       - trigger: state
-        entity_id: vacuum.robot
+        entity_id: vacuum.narwal
         from: cleaning
         to:
           - returning
@@ -120,7 +123,7 @@ automation:
     alias: 扫地机 - 故障提醒
     triggers:
       - trigger: state
-        entity_id: vacuum.robot
+        entity_id: vacuum.narwal
         to: error
     actions:
       - action: notify.mobile_app_phone

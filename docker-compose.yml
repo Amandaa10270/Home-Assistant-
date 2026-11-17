@@ -11,4 +11,4 @@ services:
     privileged: true
     network_mode: host      # 必须用 host 网络，才能自动发现局域网里的扫地机、摄像头
     environment:
-      - TZ=Asia/Shanghai
+      - TZ=America/New_York

@@ -1,9 +1,10 @@
 # ============================================================
-#  暖气 / 温控
-#  需要的实体：
-#    climate.heating                  暖气温控器
-#    sensor.indoor_temperature        室内温度（没有单独传感器可以删掉相关部分，
-#                                     温控器自带的 current_temperature 也会显示）
+#  暖气：Google Nest 温控器
+#  使用 HA 官方「Google Nest」集成
+#  需要的实体（把 Nest 温控器的实体 ID 改成这个）：
+#    climate.heating                  Nest 温控器
+#  注意：夏天 Nest 处于制冷(cool)模式时，自动调温会自动跳过，不会误开暖气；
+#        也可以在手机「设置」页直接关掉「暖气自动调节」。
 # ============================================================
 
 input_number:
@@ -80,6 +81,14 @@ automation:
       - condition: state
         entity_id: input_boolean.heating_auto
         state: "on"
+      # 夏天 Nest 在制冷 / 自动(冷暖)模式时不干预
+      - condition: not
+        conditions:
+          - condition: state
+            entity_id: climate.heating
+            state:
+              - cool
+              - heat_cool
     actions:
       - variables:
           target_temp: >
