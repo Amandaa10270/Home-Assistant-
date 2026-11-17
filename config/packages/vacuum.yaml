@@ -1,0 +1,132 @@
+# ============================================================
+#  扫地机器人
+#  需要的实体（在 HA 里把设备实体 ID 改成下面的名字即可）：
+#    vacuum.robot              扫地机器人
+#  手机通知：notify.mobile_app_phone（见 README）
+# ============================================================
+
+input_boolean:
+  vacuum_auto_clean:
+    name: 离家自动清扫
+    icon: mdi:robot-vacuum-variant
+    initial: true
+
+input_datetime:
+  vacuum_last_clean:
+    name: 上次清扫时间
+    has_date: true
+    has_time: true
+
+template:
+  - sensor:
+      # 英文名用于生成固定的实体 ID：sensor.vacuum_hours_since_clean
+      - name: Vacuum hours since clean
+        unique_id: vacuum_hours_since_clean
+        unit_of_measurement: h
+        icon: mdi:timer-sand
+        state: >
+          {% set last = states('input_datetime.vacuum_last_clean') %}
+          {% if last in ['unknown', 'unavailable', ''] %}
+            999
+          {% else %}
+            {{ ((now() - as_datetime(last) | as_local).total_seconds() / 3600) | round(0) }}
+          {% endif %}
+
+script:
+  vacuum_clean_now:
+    alias: 立即清扫
+    icon: mdi:play
+    sequence:
+      - action: vacuum.start
+        target:
+          entity_id: vacuum.robot
+
+  vacuum_go_home:
+    alias: 扫地机回充
+    icon: mdi:home-import-outline
+    sequence:
+      - action: vacuum.return_to_base
+        target:
+          entity_id: vacuum.robot
+
+automation:
+  # 离家后自动清扫（距上次清扫超过 20 小时，避免一天扫多次）
+  - id: vacuum_clean_when_away
+    alias: 扫地机 - 离家自动清扫
+    triggers:
+      - trigger: state
+        entity_id: input_select.home_mode
+        to: 离家
+        for: "00:10:00"
+    conditions:
+      - condition: state
+        entity_id: input_boolean.vacuum_auto_clean
+        state: "on"
+      - condition: numeric_state
+        entity_id: sensor.vacuum_hours_since_clean
+        above: 20
+      - condition: state
+        entity_id: vacuum.robot
+        state: docked
+    actions:
+      - action: vacuum.start
+        target:
+          entity_id: vacuum.robot
+      - action: notify.mobile_app_phone
+        data:
+          title: 🧹 扫地机器人
+          message: 家里没人，已开始自动清扫
+
+  # 有人回家且正在清扫 → 自动回充，不打扰
+  - id: vacuum_return_when_home
+    alias: 扫地机 - 有人回家时回充
+    triggers:
+      - trigger: state
+        entity_id: input_select.home_mode
+        to: 在家
+    conditions:
+      - condition: state
+        entity_id: vacuum.robot
+        state: cleaning
+    actions:
+      - action: vacuum.return_to_base
+        target:
+          entity_id: vacuum.robot
+
+  # 清扫完成 → 记录时间并推送通知
+  - id: vacuum_finished
+    alias: 扫地机 - 清扫完成通知
+    triggers:
+      - trigger: state
+        entity_id: vacuum.robot
+        from: cleaning
+        to:
+          - returning
+          - docked
+        for: "00:01:00"
+    actions:
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.vacuum_last_clean
+        data:
+          datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+      - action: notify.mobile_app_phone
+        data:
+          title: 🧹 扫地机器人
+          message: 清扫完成，正在回充
+
+  # 出错 / 被卡住 → 推送提醒
+  - id: vacuum_error
+    alias: 扫地机 - 故障提醒
+    triggers:
+      - trigger: state
+        entity_id: vacuum.robot
+        to: error
+    actions:
+      - action: notify.mobile_app_phone
+        data:
+          title: ⚠️ 扫地机器人需要帮助
+          message: 扫地机器人出错或被卡住了，请检查
+          data:
+            push:
+              interruption-level: time-sensitive

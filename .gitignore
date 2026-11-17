@@ -1,0 +1,13 @@
+# Home Assistant 运行时生成的文件，不要提交
+config/secrets.yaml
+config/.storage/
+config/.cloud/
+config/home-assistant_v2.db*
+config/home-assistant.log*
+config/*.log
+config/deps/
+config/tts/
+config/backups/
+config/.HA_VERSION
+config/www/snapshots/*.jpg
+__pycache__/

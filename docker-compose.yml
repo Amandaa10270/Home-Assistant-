@@ -1,0 +1,14 @@
+# 一键启动 Home Assistant：docker compose up -d
+# 启动后手机/电脑浏览器访问 http://<这台机器的局域网IP>:8123
+services:
+  homeassistant:
+    container_name: homeassistant
+    image: ghcr.io/home-assistant/home-assistant:stable
+    volumes:
+      - ./config:/config
+      - /etc/localtime:/etc/localtime:ro
+    restart: unless-stopped
+    privileged: true
+    network_mode: host      # 必须用 host 网络，才能自动发现局域网里的扫地机、摄像头
+    environment:
+      - TZ=Asia/Shanghai

@@ -1,0 +1,48 @@
+# ============================================================
+#  智能家居主配置 —— 扫地机器人 / 监控摄像头 / 暖气
+#  所有功能按设备拆分在 packages/ 目录下，方便维护
+# ============================================================
+
+homeassistant:
+  name: 我的家
+  unit_system: metric
+  temperature_unit: C
+  time_zone: Asia/Shanghai          # 按实际所在地修改
+  country: CN
+  language: zh-Hans
+  # 自动加载 packages 目录下的所有设备配置
+  packages: !include_dir_named packages
+  # 允许把摄像头截图保存到 www/snapshots，供手机通知显示
+  allowlist_external_dirs:
+    - /config/www/snapshots
+
+# 加载 HA 默认组件（含手机 App 支持 mobile_app、历史记录、能耗等）
+default_config:
+
+# 前端：注册手机专用仪表盘
+lovelace:
+  dashboards:
+    home-mobile:
+      mode: yaml
+      filename: dashboards/mobile.yaml
+      title: 我的家
+      icon: mdi:home-heart
+      show_in_sidebar: true
+      require_admin: false
+
+# 通过反向代理 / 远程访问时需要（例如 Nginx、Cloudflare Tunnel）
+# http:
+#   use_x_forwarded_for: true
+#   trusted_proxies:
+#     - 172.16.0.0/12
+
+# 历史记录保留 30 天（暖气温度曲线用）
+recorder:
+  purge_keep_days: 30
+
+logger:
+  default: warning
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml

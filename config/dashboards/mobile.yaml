@@ -1,0 +1,189 @@
+# ============================================================
+#  手机仪表盘 —— 在 Home Assistant App 里打开「我的家」
+#  只使用 HA 自带卡片，无需安装任何第三方插件
+# ============================================================
+title: 我的家
+views:
+  # ---------------- 首页：一眼看到所有设备 ----------------
+  - title: 首页
+    path: home
+    icon: mdi:home
+    type: sections
+    max_columns: 2
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: 家庭状态
+            icon: mdi:home-heart
+          - type: tile
+            entity: input_select.home_mode
+            name: 家庭模式
+            grid_options: { columns: 12 }
+            features:
+              - type: select-options
+          - type: tile
+            entity: climate.heating
+            name: 暖气
+            state_content: [hvac_action, current_temperature]
+            grid_options: { columns: 6 }
+          - type: tile
+            entity: vacuum.robot
+            name: 扫地机
+            state_content: [state, battery_level]
+            grid_options: { columns: 6 }
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: 实时监控
+            icon: mdi:cctv
+            badges:
+              - type: entity
+                entity: input_boolean.camera_alerts
+                show_state: true
+                tap_action: { action: toggle }
+          - type: picture-entity
+            entity: camera.front_door
+            name: 门口
+            camera_view: auto
+            grid_options: { columns: 6 }
+            tap_action: { action: navigate, navigation_path: /home-mobile/cameras }
+          - type: picture-entity
+            entity: camera.living_room
+            name: 客厅
+            camera_view: auto
+            grid_options: { columns: 6 }
+            tap_action: { action: navigate, navigation_path: /home-mobile/cameras }
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: 快捷操作
+            icon: mdi:gesture-tap
+          - type: button
+            name: 开始清扫
+            icon: mdi:robot-vacuum
+            tap_action:
+              action: perform-action
+              perform_action: vacuum.start
+              target: { entity_id: vacuum.robot }
+            grid_options: { columns: 4, rows: 2 }
+          - type: button
+            name: 扫地机回充
+            icon: mdi:home-import-outline
+            tap_action:
+              action: perform-action
+              perform_action: vacuum.return_to_base
+              target: { entity_id: vacuum.robot }
+            grid_options: { columns: 4, rows: 2 }
+          - type: button
+            name: 加热 1 小时
+            icon: mdi:fire
+            tap_action:
+              action: perform-action
+              perform_action: script.heating_boost
+            grid_options: { columns: 4, rows: 2 }
+
+  # ---------------- 监控 ----------------
+  - title: 监控
+    path: cameras
+    icon: mdi:cctv
+    cards:
+      - type: tile
+        entity: input_boolean.camera_alerts
+        name: 移动侦测推送
+        features:
+          - type: toggle
+      - type: picture-glance
+        title: 门口
+        camera_image: camera.front_door
+        camera_view: live
+        entities:
+          - binary_sensor.front_door_motion
+      - type: picture-glance
+        title: 客厅
+        camera_image: camera.living_room
+        camera_view: live
+        entities:
+          - binary_sensor.living_room_motion
+      - type: logbook
+        title: 移动记录
+        hours_to_show: 24
+        target:
+          entity_id:
+            - binary_sensor.front_door_motion
+            - binary_sensor.living_room_motion
+
+  # ---------------- 暖气 ----------------
+  - title: 暖气
+    path: heating
+    icon: mdi:radiator
+    cards:
+      - type: thermostat
+        entity: climate.heating
+        name: 暖气
+        features:
+          - type: climate-hvac-modes
+            hvac_modes: [heat, "off"]
+      - type: entities
+        title: 温度设置
+        state_color: true
+        entities:
+          - entity: input_boolean.heating_auto
+          - entity: input_number.heating_comfort_temp
+          - entity: input_number.heating_sleep_temp
+          - entity: input_number.heating_eco_temp
+          - entity: script.heating_boost
+      - type: history-graph
+        title: 室温变化（24 小时）
+        hours_to_show: 24
+        entities:
+          - entity: climate.heating
+            name: 暖气
+
+  # ---------------- 扫地机器人 ----------------
+  - title: 扫地机
+    path: vacuum
+    icon: mdi:robot-vacuum
+    cards:
+      - type: tile
+        entity: vacuum.robot
+        name: 扫地机器人
+        vertical: true
+        state_content: [state, battery_level]
+        features:
+          - type: vacuum-commands
+            commands: [start_pause, stop, return_home, locate]
+      - type: entities
+        title: 清扫设置
+        state_color: true
+        entities:
+          - entity: input_boolean.vacuum_auto_clean
+          - entity: input_datetime.vacuum_last_clean
+          - entity: sensor.vacuum_hours_since_clean
+            name: 距上次清扫
+      - type: logbook
+        title: 清扫记录
+        hours_to_show: 72
+        target:
+          entity_id: vacuum.robot
+
+  # ---------------- 设置 ----------------
+  - title: 设置
+    path: settings
+    icon: mdi:cog
+    cards:
+      - type: entities
+        title: 家庭模式
+        entities:
+          - entity: input_select.home_mode
+          - entity: input_datetime.sleep_time
+          - entity: input_datetime.wake_time
+      - type: entities
+        title: 自动化开关
+        state_color: true
+        entities:
+          - entity: input_boolean.vacuum_auto_clean
+          - entity: input_boolean.heating_auto
+          - entity: input_boolean.camera_alerts

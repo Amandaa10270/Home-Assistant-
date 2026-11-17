@@ -1,0 +1,96 @@
+# ============================================================
+#  家庭模式：在家 / 离家 / 睡眠 / 度假
+#  扫地机、暖气、监控都会根据这个模式自动联动
+# ============================================================
+
+input_select:
+  home_mode:
+    name: 家庭模式
+    icon: mdi:home-account
+    options:
+      - 在家
+      - 离家
+      - 睡眠
+      - 度假
+
+input_datetime:
+  sleep_time:
+    name: 睡觉时间
+    has_date: false
+    has_time: true
+    initial: "23:00"
+  wake_time:
+    name: 起床时间
+    has_date: false
+    has_time: true
+    initial: "07:00"
+
+automation:
+  # 所有家庭成员离开 → 离家模式（依赖手机 App 的定位）
+  - id: mode_everyone_left
+    alias: 模式 - 全家离开切换到离家
+    triggers:
+      - trigger: state
+        entity_id: zone.home
+        to: "0"
+        for: "00:05:00"
+    conditions:
+      - condition: not
+        conditions:
+          - condition: state
+            entity_id: input_select.home_mode
+            state: 度假
+    actions:
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.home_mode
+        data:
+          option: 离家
+
+  # 有人回家 → 在家模式
+  - id: mode_someone_home
+    alias: 模式 - 有人回家切换到在家
+    triggers:
+      - trigger: numeric_state
+        entity_id: zone.home
+        above: 0
+    actions:
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.home_mode
+        data:
+          option: 在家
+
+  # 到点睡觉 → 睡眠模式（仅在家时）
+  - id: mode_bedtime
+    alias: 模式 - 到点进入睡眠
+    triggers:
+      - trigger: time
+        at: input_datetime.sleep_time
+    conditions:
+      - condition: state
+        entity_id: input_select.home_mode
+        state: 在家
+    actions:
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.home_mode
+        data:
+          option: 睡眠
+
+  # 到点起床 → 在家模式
+  - id: mode_wakeup
+    alias: 模式 - 起床恢复在家
+    triggers:
+      - trigger: time
+        at: input_datetime.wake_time
+    conditions:
+      - condition: state
+        entity_id: input_select.home_mode
+        state: 睡眠
+    actions:
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.home_mode
+        data:
+          option: 在家

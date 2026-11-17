@@ -1,0 +1,153 @@
+# ============================================================
+#  暖气 / 温控
+#  需要的实体：
+#    climate.heating                  暖气温控器
+#    sensor.indoor_temperature        室内温度（没有单独传感器可以删掉相关部分，
+#                                     温控器自带的 current_temperature 也会显示）
+# ============================================================
+
+input_number:
+  heating_comfort_temp:
+    name: 舒适温度
+    icon: mdi:sun-thermometer
+    min: 16
+    max: 28
+    step: 0.5
+    unit_of_measurement: °C
+    initial: 22
+  heating_eco_temp:
+    name: 节能温度（离家）
+    icon: mdi:leaf
+    min: 10
+    max: 22
+    step: 0.5
+    unit_of_measurement: °C
+    initial: 17
+  heating_sleep_temp:
+    name: 睡眠温度
+    icon: mdi:weather-night
+    min: 14
+    max: 24
+    step: 0.5
+    unit_of_measurement: °C
+    initial: 19
+
+input_boolean:
+  heating_auto:
+    name: 暖气自动调节
+    icon: mdi:radiator
+    initial: true
+
+script:
+  heating_boost:
+    alias: 暖气加热 1 小时
+    icon: mdi:fire
+    mode: restart
+    sequence:
+      - action: climate.set_hvac_mode
+        target:
+          entity_id: climate.heating
+        data:
+          hvac_mode: heat
+      - action: climate.set_temperature
+        target:
+          entity_id: climate.heating
+        data:
+          temperature: "{{ states('input_number.heating_comfort_temp') | float + 2 }}"
+      - delay: "01:00:00"
+      - action: climate.set_temperature
+        target:
+          entity_id: climate.heating
+        data:
+          temperature: "{{ states('input_number.heating_comfort_temp') | float }}"
+
+automation:
+  # 根据家庭模式自动调温
+  - id: heating_follow_mode
+    alias: 暖气 - 跟随家庭模式调温
+    mode: restart
+    triggers:
+      - trigger: state
+        entity_id: input_select.home_mode
+      - trigger: state
+        entity_id:
+          - input_number.heating_comfort_temp
+          - input_number.heating_eco_temp
+          - input_number.heating_sleep_temp
+      - trigger: homeassistant
+        event: start
+    conditions:
+      - condition: state
+        entity_id: input_boolean.heating_auto
+        state: "on"
+    actions:
+      - variables:
+          target_temp: >
+            {% set mode = states('input_select.home_mode') %}
+            {% if mode == '在家' %}{{ states('input_number.heating_comfort_temp') }}
+            {% elif mode == '睡眠' %}{{ states('input_number.heating_sleep_temp') }}
+            {% elif mode == '度假' %}12
+            {% else %}{{ states('input_number.heating_eco_temp') }}{% endif %}
+      - action: climate.set_hvac_mode
+        target:
+          entity_id: climate.heating
+        data:
+          hvac_mode: heat
+      - action: climate.set_temperature
+        target:
+          entity_id: climate.heating
+        data:
+          temperature: "{{ target_temp | float }}"
+
+  # 快回家时提前预热（距家 5 公里内且正在靠近）
+  - id: heating_preheat_arriving
+    alias: 暖气 - 回家路上提前预热
+    triggers:
+      - trigger: numeric_state
+        entity_id: sensor.home_nearest_distance
+        below: 5
+    conditions:
+      - condition: state
+        entity_id: input_select.home_mode
+        state: 离家
+      - condition: state
+        entity_id: sensor.home_nearest_direction_of_travel
+        state: towards
+      - condition: state
+        entity_id: input_boolean.heating_auto
+        state: "on"
+    actions:
+      - action: climate.set_hvac_mode
+        target:
+          entity_id: climate.heating
+        data:
+          hvac_mode: heat
+      - action: climate.set_temperature
+        target:
+          entity_id: climate.heating
+        data:
+          temperature: "{{ states('input_number.heating_comfort_temp') | float }}"
+      - action: notify.mobile_app_phone
+        data:
+          title: 🔥 暖气
+          message: 检测到你正在回家，已开始预热到 {{ states('input_number.heating_comfort_temp') }}°C
+
+  # 低温 / 防冻提醒
+  - id: heating_low_temp_alert
+    alias: 暖气 - 室温过低提醒
+    triggers:
+      - trigger: numeric_state
+        entity_id: climate.heating
+        attribute: current_temperature
+        below: 12
+        for: "00:15:00"
+    actions:
+      - action: notify.mobile_app_phone
+        data:
+          title: ❄️ 室温过低
+          message: >
+            室内温度只有 {{ state_attr('climate.heating', 'current_temperature') }}°C，
+            请检查暖气是否正常工作
+          data:
+            push:
+              interruption-level: time-sensitive

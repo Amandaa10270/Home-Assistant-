@@ -1,0 +1,77 @@
+# ============================================================
+#  监控摄像头
+#  需要的实体：
+#    camera.front_door                门口摄像头
+#    camera.living_room               客厅摄像头
+#    binary_sensor.front_door_motion  门口移动侦测
+#    binary_sensor.living_room_motion 客厅移动侦测
+#  摄像头数量不同时，按同样格式增删即可
+# ============================================================
+
+input_boolean:
+  camera_alerts:
+    name: 监控报警推送
+    icon: mdi:cctv
+    initial: true
+
+automation:
+  # 离家 / 度假 / 睡眠时检测到移动 → 截图并推送到手机（附带实时画面）
+  - id: camera_motion_alert
+    alias: 监控 - 有人移动推送截图
+    mode: single           # 推送后 1 分钟内不重复推送，避免刷屏
+    max_exceeded: silent
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.front_door_motion
+        to: "on"
+        variables:
+          cam: camera.front_door
+          place: 门口
+      - trigger: state
+        entity_id: binary_sensor.living_room_motion
+        to: "on"
+        variables:
+          cam: camera.living_room
+          place: 客厅
+    conditions:
+      - condition: state
+        entity_id: input_boolean.camera_alerts
+        state: "on"
+      - condition: state
+        entity_id: input_select.home_mode
+        state:
+          - 离家
+          - 度假
+          - 睡眠
+    actions:
+      - variables:
+          file: "{{ cam.split('.')[1] }}_{{ now().strftime('%Y%m%d_%H%M%S') }}.jpg"
+      - action: camera.snapshot
+        target:
+          entity_id: "{{ cam }}"
+        data:
+          filename: "/config/www/snapshots/{{ file }}"
+      - action: notify.mobile_app_phone
+        data:
+          title: 🚨 {{ place }}检测到移动
+          message: "{{ now().strftime('%H:%M:%S') }}，当前模式：{{ states('input_select.home_mode') }}"
+          data:
+            image: "/local/snapshots/{{ file }}"
+            entity_id: "{{ cam }}"          # iOS 长按通知可看实时画面
+            url: /home-mobile/cameras         # 点击通知打开监控页
+            clickAction: /home-mobile/cameras # Android
+            push:
+              interruption-level: time-sensitive
+      - delay: "00:01:00"
+
+  # 每天凌晨清理 7 天前的截图，防止占满存储
+  - id: camera_cleanup_snapshots
+    alias: 监控 - 清理旧截图
+    triggers:
+      - trigger: time
+        at: "03:30:00"
+    actions:
+      - action: shell_command.cleanup_snapshots
+
+shell_command:
+  cleanup_snapshots: "find /config/www/snapshots -name '*.jpg' -mtime +7 -delete"
