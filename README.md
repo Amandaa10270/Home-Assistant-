@@ -51,17 +51,22 @@ docker compose up -d
 
 ### 第 3 步：接入你的三类设备
 
-#### 🧹 Narwal 云鲸扫地机
-Narwal 没有官方 Home Assistant 集成，用社区开发的 **Narwal Local**（[cvette/narwal-ha](https://github.com/cvette/narwal-ha)）。它走局域网直连，不需要云鲸账号。
+#### 🧹 Narwal Freo X Ultra 扫地机
+Freo X Ultra **没有局域网接口**，只能通过云鲸的云端连接。可用的是社区集成 [Behike/narwal-integration](https://github.com/Behike/narwal-integration)，作者就是在 Freo X Ultra 上开发测试的。
 1. 先装 **HACS**（HA 的社区插件商店）：按 [HACS 官方教程](https://hacs.xyz/docs/use/) 安装并重启
-2. HACS → 右上角 ⋮ → **自定义存储库** → 填 `https://github.com/cvette/narwal-ha`，类别选 **Integration**
-3. 搜索安装 **Narwal Local**，重启 HA
-4. 扫地机一般会出现在 **设置 → 设备与服务 → 已发现**，点「配置」即可。没有出现就手动添加 **Narwal Local**，填扫地机的 IP 地址
-5. 建议在路由器（Spectrum）里给扫地机**固定 IP**（DHCP 保留）
+2. HACS → 右上角 ⋮ → **自定义存储库** → 填 `https://github.com/Behike/narwal-integration`，类别选 **Integration**
+3. 在 HACS 里搜索 **Narwal**，安装后重启 HA
+4. **设置 → 设备与服务 → 添加集成 → Narwal**，填云鲸 App 的**邮箱、密码**，地区选 **US**
+5. 如果要求填 **Product Key**，Freo X Ultra 的是 `EHf6cRNRGT`
 
-会自动生成 `vacuum.narwal`、`sensor.narwal_battery`，配置里已经用这两个名字，**不用改名**。
+接入后，把实体 ID 改成 **`vacuum.narwal`**（扫地机）和 **`sensor.narwal_battery`**（电量）。你在云鲸 App 里给扫地机起名叫 "Home assistant"，所以默认 ID 可能是 `vacuum.home_assistant` 之类，记得改。
 
-> ⚠️ 这个集成目前还是早期版本，作者主要用 J4 测试，云鲸固件更新后可能失效。如果你的型号用不了，告诉我型号，我帮你换别的集成。
+> ⚠️ **说实话，这一步可能会卡住**：
+> - 这个集成还在开发中，用的人很少，云鲸更新固件或云端后可能失效
+> - 有的版本（如 [quittung 的分支](https://github.com/quittung/narwal-integration)）要求填 32 位的「Device Name」，这个只能从 App 的网络数据里抓，普通用户很难拿到。如果遇到这一步，把界面截图发给我
+> - 本地集成（Narwal Local、Narwal Flow 等）**不支持 Freo X Ultra**，不用试
+>
+> 就算扫地机暂时接不上，暖气和监控也照常工作，手机页面里扫地机那一块会显示「不可用」。
 
 #### 🔥 Google Nest 温控器
 用 HA 官方的 **Google Nest** 集成。Google 要求先完成一次性设置，大约 20 分钟：
@@ -99,13 +104,13 @@ CareCamPro 是白牌摄像头，没有专门的集成，但大多支持 **ONVIF 
 
 | 改成这个 ID | 是什么 |
 |---|---|
+| `vacuum.narwal` | Narwal 扫地机 |
+| `sensor.narwal_battery` | 扫地机电量 |
 | `climate.heating` | Nest 温控器 |
 | `camera.front_door` | 第 1 个摄像头（门口） |
 | `camera.living_room` | 第 2 个摄像头（客厅） |
 | `binary_sensor.front_door_motion` | 第 1 个摄像头的移动侦测 |
 | `binary_sensor.living_room_motion` | 第 2 个摄像头的移动侦测 |
-
-Narwal 扫地机不用改。
 
 > 摄像头数量不是 2 个，或者装在别的位置？告诉我，我帮你改 `cameras.yaml` 和手机页面。
 > 摄像头没有移动侦测传感器的话，实时画面照常能看，只是没有「有人移动」推送。

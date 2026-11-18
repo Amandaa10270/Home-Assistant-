@@ -1,8 +1,8 @@
 # ============================================================
-#  扫地机器人：Narwal 云鲸
-#  使用 HACS 社区集成「Narwal Local」（本地控制，无需云端账号）
-#    https://github.com/cvette/narwal-ha
-#  集成默认生成的实体（无需改名）：
+#  扫地机器人：Narwal Freo X Ultra
+#  Freo X Ultra 没有本地接口，使用 HACS 社区集成（云鲸云端 MQTT）：
+#    https://github.com/Behike/narwal-integration
+#  接入后把实体 ID 改成：
 #    vacuum.narwal             扫地机器人
 #    sensor.narwal_battery     电量
 #  手机通知：notify.mobile_app_phone（见 README）
