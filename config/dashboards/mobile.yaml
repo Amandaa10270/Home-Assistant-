@@ -44,16 +44,10 @@ views:
                 show_state: true
                 tap_action: { action: toggle }
           - type: picture-entity
-            entity: camera.front_door
-            name: 门口
+            entity: camera.desk
+            name: 书桌
             camera_view: auto
-            grid_options: { columns: 6 }
-            tap_action: { action: navigate, navigation_path: /home-mobile/cameras }
-          - type: picture-entity
-            entity: camera.living_room
-            name: 客厅
-            camera_view: auto
-            grid_options: { columns: 6 }
+            grid_options: { columns: 12 }
             tap_action: { action: navigate, navigation_path: /home-mobile/cameras }
 
       - type: grid
@@ -96,24 +90,16 @@ views:
         features:
           - type: toggle
       - type: picture-glance
-        title: 门口
-        camera_image: camera.front_door
+        title: 书桌
+        camera_image: camera.desk
         camera_view: live
         entities:
-          - binary_sensor.front_door_motion
-      - type: picture-glance
-        title: 客厅
-        camera_image: camera.living_room
-        camera_view: live
-        entities:
-          - binary_sensor.living_room_motion
+          - binary_sensor.desk_motion
       - type: logbook
         title: 移动记录
         hours_to_show: 24
         target:
-          entity_id:
-            - binary_sensor.front_door_motion
-            - binary_sensor.living_room_motion
+          entity_id: binary_sensor.desk_motion
 
   # ---------------- 暖气 ----------------
   - title: 暖气

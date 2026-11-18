@@ -2,11 +2,9 @@
 #  监控摄像头：CareCamPro
 #  通过 HA 官方「ONVIF」集成接入（见 README 第 3 步）
 #  需要的实体（接入后把实体 ID 改成下面的名字）：
-#    camera.front_door                门口摄像头
-#    camera.living_room               客厅摄像头
-#    binary_sensor.front_door_motion  门口移动侦测
-#    binary_sensor.living_room_motion 客厅移动侦测
-#  摄像头数量不同时，按同样格式增删即可
+#    camera.desk                      书桌摄像头
+#    binary_sensor.desk_motion        书桌摄像头的移动侦测
+#  以后加摄像头：在下面 triggers 里照格式加一段即可
 # ============================================================
 
 input_boolean:
@@ -23,17 +21,11 @@ automation:
     max_exceeded: silent
     triggers:
       - trigger: state
-        entity_id: binary_sensor.front_door_motion
+        entity_id: binary_sensor.desk_motion
         to: "on"
         variables:
-          cam: camera.front_door
-          place: 门口
-      - trigger: state
-        entity_id: binary_sensor.living_room_motion
-        to: "on"
-        variables:
-          cam: camera.living_room
-          place: 客厅
+          cam: camera.desk
+          place: 书桌
     conditions:
       - condition: state
         entity_id: input_boolean.camera_alerts

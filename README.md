@@ -9,7 +9,7 @@
 ## 功能一览
 
 **手机仪表盘（5 个页面）**
-- **首页**：家庭模式、暖气温度、扫地机状态、所有摄像头画面、快捷按钮
+- **首页**：家庭模式、暖气温度、扫地机状态、书桌摄像头画面、快捷按钮
 - **监控**：实时画面、移动侦测记录、报警开关
 - **暖气**：温控旋钮、舒适/睡眠/节能温度设置、24 小时温度曲线
 - **扫地机**：开始 / 暂停 / 停止 / 回充 / 寻找、上次清扫时间、清扫记录
@@ -107,12 +107,10 @@ CareCamPro 是白牌摄像头，没有专门的集成，但大多支持 **ONVIF 
 | `vacuum.narwal` | Narwal 扫地机 |
 | `sensor.narwal_battery` | 扫地机电量 |
 | `climate.heating` | Nest 温控器 |
-| `camera.front_door` | 第 1 个摄像头（门口） |
-| `camera.living_room` | 第 2 个摄像头（客厅） |
-| `binary_sensor.front_door_motion` | 第 1 个摄像头的移动侦测 |
-| `binary_sensor.living_room_motion` | 第 2 个摄像头的移动侦测 |
+| `camera.desk` | 书桌摄像头的画面 |
+| `binary_sensor.desk_motion` | 书桌摄像头的移动侦测 |
 
-> 摄像头数量不是 2 个，或者装在别的位置？告诉我，我帮你改 `cameras.yaml` 和手机页面。
+> 以后加摄像头？告诉我，我帮你改 `cameras.yaml` 和手机页面。
 > 摄像头没有移动侦测传感器的话，实时画面照常能看，只是没有「有人移动」推送。
 
 ### 第 5 步：安装手机 App
