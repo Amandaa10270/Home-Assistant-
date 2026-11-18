@@ -34,20 +34,43 @@
 
 ## 安装步骤
 
-### 第 1 步：准备一台常开的设备
-任选一种：树莓派 4/5、NAS（群晖/威联通）、旧电脑或迷你主机。需要和扫地机、摄像头在**同一个 Wi-Fi / 局域网**。
+### 第 1 步：用闲置电脑当主机
+你的旧电脑就可以当 Home Assistant 主机，24 小时开着，不用另买设备。**笔记本最好**：省电，自带电池，停电也不会立刻关机。
+
+**两种装法，选一种：**
+
+| | 方式 A：整机装 Home Assistant OS（推荐） | 方式 B：保留 Windows，用虚拟机 |
+|---|---|---|
+| 适合 | 这台电脑以后专门用来跑 HA | 电脑里还有文件或程序要保留 |
+| 优点 | 最稳定，加载项、备份、升级都最省心 | 不用清空电脑 |
+| 缺点 | ⚠️ **会清空整个硬盘** | 更占资源；Windows 自动更新重启时 HA 会停 |
+
+> ⚠️ 选方式 A 之前，**先把电脑里要留的照片和文件备份到 U 盘或网盘**。
 
 ### 第 2 步：安装 Home Assistant
-**方式 A：Docker（推荐，NAS / 电脑）**——注意这台设备要和扫地机、摄像头连同一个 Spectrum Wi-Fi
-```bash
-git clone <这个仓库地址> home-assistant
-cd home-assistant
-docker compose up -d
-```
 
-**方式 B：树莓派**：按 [官方教程](https://www.home-assistant.io/installation/raspberrypi) 安装 Home Assistant OS，然后把本仓库 `config/` 目录里的文件复制到它的 `/config` 目录（可用 *File editor* 或 *Samba* 加载项）。
+**方式 A：整机安装（官方教程：[Generic x86-64](https://www.home-assistant.io/installation/generic-x86-64)）**
+1. 准备一个 **8GB 以上的 U 盘**
+2. 在另一台电脑上，用 [Balena Etcher](https://etcher.balena.io/) 把 **Ubuntu Live** 写进 U 盘
+3. 旧电脑插上 U 盘开机，按 F12、F2 或 Esc（不同品牌按键不同）选择从 U 盘启动，进入 Ubuntu 的「试用」模式
+4. 在 Ubuntu 里打开浏览器，下载 **haos_generic-x86-64** 镜像，再用自带的「磁盘」工具把它恢复到电脑硬盘
+5. 关机，拔掉 U 盘，**插上网线**（第一次安装建议用网线），开机
+6. 几分钟后，在手机或其他电脑的浏览器里打开 `http://homeassistant.local:8123`
 
-启动后用浏览器打开 `http://设备IP:8123`，按提示创建账号。
+> 如果电脑开机后找不到系统：进 BIOS，打开 **UEFI** 启动，关闭 **Secure Boot**。
+
+**方式 B：Windows 虚拟机（官方教程：[Windows](https://www.home-assistant.io/installation/windows)）**
+1. 安装 [VirtualBox](https://www.virtualbox.org/)
+2. 下载官方的 **VirtualBox 镜像（.vdi）**，新建虚拟机：类型选 Linux / Other 64-bit，2GB 以上内存，打开 **EFI**
+3. 网卡设成 **桥接网卡**，否则找不到家里的设备
+4. 把 Windows 电源设置改成**永不睡眠**，并让虚拟机随开机自动启动
+
+**装好之后，把本仓库的配置放进去：**
+1. 在 HA 里打开 **设置 → 加载项**，安装 **Samba share** 或 **Studio Code Server**
+2. 把本仓库 `config/` 里的文件复制到 HA 的 `config` 文件夹，原来的同名文件直接覆盖
+3. **开发者工具 → YAML → 检查配置**，没问题就重启
+
+> 电脑设置：在 BIOS 里打开「**通电自动开机**」（Restore on AC Power Loss），停电恢复后会自动开机。笔记本可以合上盖子用，但要设置「合盖不睡眠」（方式 B）。
 
 ### 第 3 步：接入你的设备
 
@@ -121,6 +144,24 @@ CareCamPro 是白牌摄像头，没有专门的集成，但大多支持 **ONVIF 
 > 以后加摄像头？告诉我，我帮你改 `cameras.yaml` 和手机页面。
 > 摄像头没有移动侦测传感器的话，实时画面照常能看，只是没有「有人移动」推送。
 
+### 第 4.5 步：闲置平板 → 墙上中控屏 📱
+本仓库自带一个横屏中控页面，一屏就能看到家庭模式、天气、暖气、摄像头、扫地机和插座：
+
+<img src="docs/tablet.png" width="600">
+
+**iPad：**
+1. 安装 **Home Assistant** App，登录后在侧边栏打开 **「中控屏」**
+2. 太旧的 iPad 装不了 App 的话，用 Safari 打开 `http://homeassistant.local:8123/home-tablet`，点「分享 → 添加到主屏幕」
+3. **设置 → 辅助功能 → 引导式访问**：开启后，在中控屏页面连按三下侧边键，平板就锁定在这个页面
+4. **设置 → 显示与亮度 → 自动锁定 → 永不**，平板一直插着电
+
+**安卓平板：**
+1. 安装 **Home Assistant** App，或者用 **Fully Kiosk Browser**（专门做墙上屏幕的浏览器：全屏显示、有人走近时自动亮屏）
+2. 打开 `http://homeassistant.local:8123/home-tablet`
+3. 开发者选项里打开「充电时保持唤醒」
+
+> 平板长期插电，电池可能会鼓包。很多安卓平板可以设置「充到 80% 停止」，记得打开。
+
 ### 第 5 步：安装手机 App
 1. 在 App Store / Google Play 搜索 **Home Assistant** 并安装
 2. 登录你的 Home Assistant，**允许定位和通知权限**
@@ -153,8 +194,9 @@ config/
 │   ├── cameras.yaml          监控摄像头
 │   └── plugs.yaml            智能插座
 ├── dashboards/mobile.yaml    手机仪表盘
+├── dashboards/tablet.yaml    平板中控屏
 └── secrets.yaml.example      密码模板（复制成 secrets.yaml）
-docker-compose.yml            Docker 一键部署
+docker-compose.yml            Docker 部署（备用，Linux / NAS 用）
 ```
 
 ## 常见调整
@@ -168,14 +210,14 @@ docker-compose.yml            Docker 一键部署
 
 ## 🏡 全屋智能升级路线
 
-已有：扫地机 ✅ 暖气 ✅ 摄像头 ✅ 智能插座 ✅
+已有：扫地机 ✅ 暖气 ✅ 摄像头 ✅ 智能插座 ✅ 主机电脑 ✅ 中控平板 ✅
 
 按「性价比 + 对生活改善」从高到低排。以下都**适合租房**：插上就用，不用改电线。
 
 | 优先级 | 买什么 | 能实现什么 |
 |---|---|---|
-| ① 必需 | **Home Assistant Green**（官方主机，插电就用） | 整个系统的大脑，24 小时运行。比自己装电脑省心得多 |
-| ② 强烈推荐 | **Zigbee 网关**：Home Assistant Connect ZBT-2（插在 Green 上） | 接入下面这些便宜、省电、不占 Wi-Fi 的传感器 |
+| ✅ 已有 | 闲置电脑当主机，闲置平板当中控屏 | 不用另买 |
+| ② 强烈推荐 | **Zigbee 网关**：Home Assistant Connect ZBT-2（USB，插在主机电脑上） | 接入下面这些便宜、省电、不占 Wi-Fi 的传感器 |
 | ③ | **门窗传感器**（Aqara、Third Reality 等 Zigbee 款） | 开门推送到手机；开窗时暖气自动暂停，省暖气费 |
 | ④ | **人体传感器** | 晚上起夜自动开灯；没人自动关灯 |
 | ⑤ | **温湿度传感器**（每个房间一个） | 卧室温度偏低时，暖气按卧室温度调节；冬天太干燥时提醒你 |

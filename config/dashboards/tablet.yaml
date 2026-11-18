@@ -1,0 +1,108 @@
+# ============================================================
+#  平板中控屏 —— 横屏放在客厅 / 门口，一屏看全家
+#  在平板上打开：http://<HA地址>:8123/home-tablet
+# ============================================================
+title: 中控屏
+views:
+  - title: 中控
+    path: panel
+    icon: mdi:tablet-dashboard
+    type: sections
+    max_columns: 3
+    sections:
+      # ---------- 第 1 列：模式 + 天气 + 快捷 ----------
+      - type: grid
+        cards:
+          - type: heading
+            heading: 我的家
+            icon: mdi:home-heart
+          - type: tile
+            entity: input_select.home_mode
+            name: 家庭模式
+            grid_options: { columns: 12 }
+            features:
+              - type: select-options
+          - type: weather-forecast
+            entity: weather.forecast_home   # HA 安装时自动创建的天气（Met.no）
+            name: Syracuse
+            forecast_type: daily
+            show_forecast: true
+          - type: button
+            name: 我出门了
+            icon: mdi:door-open
+            tap_action:
+              action: perform-action
+              perform_action: input_select.select_option
+              target: { entity_id: input_select.home_mode }
+              data: { option: 离家 }
+            grid_options: { columns: 6, rows: 2 }
+          - type: button
+            name: 睡觉
+            icon: mdi:weather-night
+            tap_action:
+              action: perform-action
+              perform_action: input_select.select_option
+              target: { entity_id: input_select.home_mode }
+              data: { option: 睡眠 }
+            grid_options: { columns: 6, rows: 2 }
+
+      # ---------- 第 2 列：暖气 ----------
+      - type: grid
+        cards:
+          - type: heading
+            heading: 暖气
+            icon: mdi:radiator
+          - type: thermostat
+            entity: climate.heating
+            name: " "
+            features:
+              - type: climate-hvac-modes
+                hvac_modes: [heat, "off"]
+          - type: tile
+            entity: input_boolean.heating_auto
+            name: 自动调节
+            grid_options: { columns: 6 }
+            features:
+              - type: toggle
+          - type: tile
+            entity: script.heating_boost
+            name: 加热 1 小时
+            icon: mdi:fire
+            grid_options: { columns: 6 }
+
+      # ---------- 第 3 列：监控 + 扫地机 + 插座 ----------
+      - type: grid
+        cards:
+          - type: heading
+            heading: 书桌监控
+            icon: mdi:cctv
+            badges:
+              - type: entity
+                entity: input_boolean.camera_alerts
+                show_state: true
+                tap_action: { action: toggle }
+          - type: picture-entity
+            entity: camera.desk
+            camera_view: live
+            show_name: false
+          - type: heading
+            heading: 扫地机 & 插座
+            icon: mdi:robot-vacuum
+          - type: tile
+            entity: vacuum.narwal
+            name: 扫地机
+            features:
+              - type: vacuum-commands
+                commands: [start_pause, return_home]
+          - type: tile
+            entity: switch.plug_1
+            name: 插座 1
+            grid_options: { columns: 6 }
+            features:
+              - type: toggle
+          - type: tile
+            entity: switch.plug_2
+            name: 插座 2
+            grid_options: { columns: 6 }
+            features:
+              - type: toggle

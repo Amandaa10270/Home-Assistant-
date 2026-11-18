@@ -19,7 +19,7 @@ homeassistant:
 # 加载 HA 默认组件（含手机 App 支持 mobile_app、历史记录、能耗等）
 default_config:
 
-# 前端：注册手机专用仪表盘
+# 前端：注册手机仪表盘 + 平板中控屏
 lovelace:
   dashboards:
     home-mobile:
@@ -27,6 +27,13 @@ lovelace:
       filename: dashboards/mobile.yaml
       title: 我的家
       icon: mdi:home-heart
+      show_in_sidebar: true
+      require_admin: false
+    home-tablet:
+      mode: yaml
+      filename: dashboards/tablet.yaml
+      title: 中控屏
+      icon: mdi:tablet-dashboard
       show_in_sidebar: true
       require_admin: false
 
