@@ -49,7 +49,7 @@ docker compose up -d
 
 启动后用浏览器打开 `http://设备IP:8123`，按提示创建账号。
 
-### 第 3 步：接入你的三类设备
+### 第 3 步：接入你的设备
 
 #### 🧹 Narwal Freo X Ultra 扫地机
 Freo X Ultra **没有局域网接口**，只能通过云鲸的云端连接。可用的是社区集成 [Behike/narwal-integration](https://github.com/Behike/narwal-integration)，作者就是在 Freo X Ultra 上开发测试的。
@@ -99,6 +99,13 @@ CareCamPro 是白牌摄像头，没有专门的集成，但大多支持 **ONVIF 
 
 > 以上端口和路径来自网友经验，不同批次的摄像头可能不同。卡住了把报错发给我。
 
+#### 🔌 Kasa EP10 智能插座
+1. 先用 **Kasa App** 把插座连上家里 Wi-Fi。注意它**只支持 2.4GHz**，如果 Spectrum 路由器 2.4G 和 5G 用的是同一个名字，一般也能连上
+2. HA 通常会在 **设置 → 设备与服务 → 已发现** 里自动找到 **TP-Link Smart Home**，点「配置」即可。较新的固件会要求填 Kasa / TP-Link 账号密码
+3. 把两个插座的实体 ID 改成 `switch.plug_1`、`switch.plug_2`
+
+> EP10 没有电量统计功能。想看耗电量，可以选带电量统计的型号，比如 Kasa EP25。
+
 ### 第 4 步：统一实体 ID ⭐
 进入 **设置 → 设备与服务 → 实体**，点开对应设备 → ⚙️ → 修改「实体 ID」：
 
@@ -109,6 +116,7 @@ CareCamPro 是白牌摄像头，没有专门的集成，但大多支持 **ONVIF 
 | `climate.heating` | Nest 温控器 |
 | `camera.desk` | 书桌摄像头的画面 |
 | `binary_sensor.desk_motion` | 书桌摄像头的移动侦测 |
+| `switch.plug_1` / `switch.plug_2` | 两个 Kasa 插座 |
 
 > 以后加摄像头？告诉我，我帮你改 `cameras.yaml` 和手机页面。
 > 摄像头没有移动侦测传感器的话，实时画面照常能看，只是没有「有人移动」推送。
@@ -142,7 +150,8 @@ config/
 │   ├── home_mode.yaml        家庭模式（在家/离家/睡眠/度假）
 │   ├── vacuum.yaml           扫地机器人
 │   ├── heating.yaml          暖气
-│   └── cameras.yaml          监控摄像头
+│   ├── cameras.yaml          监控摄像头
+│   └── plugs.yaml            智能插座
 ├── dashboards/mobile.yaml    手机仪表盘
 └── secrets.yaml.example      密码模板（复制成 secrets.yaml）
 docker-compose.yml            Docker 一键部署
@@ -154,3 +163,27 @@ docker-compose.yml            Docker 一键部署
 - **修改起床 / 睡觉时间**：手机「设置」页。
 - **不想离家自动扫地 / 不想收到报警**：手机「设置」页关掉对应开关。
 - **度假模式**：在首页手动选「度假」，暖气保持 12°C 防冻，监控全天报警，回家后自动恢复。
+
+---
+
+## 🏡 全屋智能升级路线
+
+已有：扫地机 ✅ 暖气 ✅ 摄像头 ✅ 智能插座 ✅
+
+按「性价比 + 对生活改善」从高到低排。以下都**适合租房**：插上就用，不用改电线。
+
+| 优先级 | 买什么 | 能实现什么 |
+|---|---|---|
+| ① 必需 | **Home Assistant Green**（官方主机，插电就用） | 整个系统的大脑，24 小时运行。比自己装电脑省心得多 |
+| ② 强烈推荐 | **Zigbee 网关**：Home Assistant Connect ZBT-2（插在 Green 上） | 接入下面这些便宜、省电、不占 Wi-Fi 的传感器 |
+| ③ | **门窗传感器**（Aqara、Third Reality 等 Zigbee 款） | 开门推送到手机；开窗时暖气自动暂停，省暖气费 |
+| ④ | **人体传感器** | 晚上起夜自动开灯；没人自动关灯 |
+| ⑤ | **温湿度传感器**（每个房间一个） | 卧室温度偏低时，暖气按卧室温度调节；冬天太干燥时提醒你 |
+| ⑥ | **智能灯泡**（Kasa / Tapo / Philips Hue） | 回家自动开灯、睡觉一键关全屋、早上渐亮叫醒 |
+| ⑦ | **漏水传感器**（放在洗衣机、水槽下） | 漏水立刻报警，避免泡坏地板被房东扣押金 |
+| ⑧ 可选 | 智能门锁 / 门铃 | 远程开门、访客提醒（租房要先问房东） |
+
+**买传感器时认准 Zigbee 协议**：便宜、电池能用 1 到 2 年，而且不依赖厂家 App 和云端。
+避开只能用自家 App、Home Assistant 接不了的小众品牌。
+
+买了新设备告诉我型号，我帮你接进系统、加到手机页面、写好联动。

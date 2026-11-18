@@ -53,6 +53,24 @@ views:
       - type: grid
         cards:
           - type: heading
+            heading: 插座
+            icon: mdi:power-socket-us
+          - type: tile
+            entity: switch.plug_1
+            name: 插座 1
+            grid_options: { columns: 6 }
+            features:
+              - type: toggle
+          - type: tile
+            entity: switch.plug_2
+            name: 插座 2
+            grid_options: { columns: 6 }
+            features:
+              - type: toggle
+
+      - type: grid
+        cards:
+          - type: heading
             heading: 快捷操作
             icon: mdi:gesture-tap
           - type: button
@@ -157,6 +175,34 @@ views:
         target:
           entity_id: vacuum.narwal
 
+  # ---------------- 插座 ----------------
+  - title: 插座
+    path: plugs
+    icon: mdi:power-socket-us
+    cards:
+      - type: tile
+        entity: switch.plug_1
+        name: 插座 1
+        features:
+          - type: toggle
+      - type: tile
+        entity: switch.plug_2
+        name: 插座 2
+        features:
+          - type: toggle
+      - type: entities
+        title: 离家时自动关闭
+        state_color: true
+        entities:
+          - entity: input_boolean.plug_1_off_when_away
+          - entity: input_boolean.plug_2_off_when_away
+          - entity: script.plugs_all_off
+      - type: logbook
+        title: 开关记录
+        hours_to_show: 48
+        target:
+          entity_id: [switch.plug_1, switch.plug_2]
+
   # ---------------- 设置 ----------------
   - title: 设置
     path: settings
@@ -175,3 +221,5 @@ views:
           - entity: input_boolean.vacuum_auto_clean
           - entity: input_boolean.heating_auto
           - entity: input_boolean.camera_alerts
+          - entity: input_boolean.plug_1_off_when_away
+          - entity: input_boolean.plug_2_off_when_away

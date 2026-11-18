@@ -1,0 +1,58 @@
+# ============================================================
+#  智能插座：Kasa EP10（2 个装）
+#  使用 HA 官方「TP-Link Smart Home」集成（局域网直连，自动发现）
+#  需要的实体（接入后把实体 ID 改成下面的名字）：
+#    switch.plug_1      插座 1
+#    switch.plug_2      插座 2
+#  插上什么电器后，可以在手机页面里把名字改成「台灯」「电热水壶」等
+# ============================================================
+
+input_boolean:
+  plug_1_off_when_away:
+    name: 插座 1 离家自动关
+    icon: mdi:power-plug-off
+  plug_2_off_when_away:
+    name: 插座 2 离家自动关
+    icon: mdi:power-plug-off
+
+script:
+  plugs_all_off:
+    alias: 关闭全部插座
+    icon: mdi:power-plug-off-outline
+    sequence:
+      - action: switch.turn_off
+        target:
+          entity_id:
+            - switch.plug_1
+            - switch.plug_2
+
+automation:
+  # 离家时，关闭勾选了「离家自动关」的插座
+  - id: plugs_off_when_away
+    alias: 插座 - 离家自动关闭
+    triggers:
+      - trigger: state
+        entity_id: input_select.home_mode
+        to:
+          - 离家
+          - 度假
+    actions:
+      - variables:
+          to_off: >
+            {% set ns = namespace(l=[]) %}
+            {% for n in [1, 2] %}
+              {% if is_state('input_boolean.plug_' ~ n ~ '_off_when_away', 'on')
+                    and is_state('switch.plug_' ~ n, 'on') %}
+                {% set ns.l = ns.l + ['switch.plug_' ~ n] %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.l }}
+      - condition: template
+        value_template: "{{ to_off | count > 0 }}"
+      - action: switch.turn_off
+        target:
+          entity_id: "{{ to_off }}"
+      - action: notify.mobile_app_phone
+        data:
+          title: 🔌 插座
+          message: 你已离家，已自动关闭 {{ to_off | count }} 个插座
