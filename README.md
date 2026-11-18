@@ -34,43 +34,41 @@
 
 ## 安装步骤
 
-### 第 1 步：用闲置电脑当主机
-你的旧电脑就可以当 Home Assistant 主机，24 小时开着，不用另买设备。**笔记本最好**：省电，自带电池，停电也不会立刻关机。
+### 第 1 步：MacBook Air 当主机
+MacBook Air 2024 用的是苹果 M 系列芯片，**不能直接装 Home Assistant 系统**。所以用免费的 **UTM** 虚拟机，在 macOS 里跑一个 Home Assistant。好处是 **Mac 不用清空**，平时照样能用。
 
-**两种装法，选一种：**
+> 💡 先想一下：2024 款 MacBook Air 还值不少钱。如果它以后基本不用，卖掉再买一台 **Home Assistant Green**（约 100 美元，插电就用、功耗只有几瓦）可能更划算。下面是用 Mac 的方法。
 
-| | 方式 A：整机装 Home Assistant OS（推荐） | 方式 B：保留 Windows，用虚拟机 |
-|---|---|---|
-| 适合 | 这台电脑以后专门用来跑 HA | 电脑里还有文件或程序要保留 |
-| 优点 | 最稳定，加载项、备份、升级都最省心 | 不用清空电脑 |
-| 缺点 | ⚠️ **会清空整个硬盘** | 更占资源；Windows 自动更新重启时 HA 会停 |
+### 第 2 步：在 Mac 上安装 Home Assistant
 
-> ⚠️ 选方式 A 之前，**先把电脑里要留的照片和文件备份到 U 盘或网盘**。
+**① 下载两样东西**
+- [UTM](https://mac.getutm.app/)（免费虚拟机软件）
+- Home Assistant 系统镜像：打开 [HA OS 发布页](https://github.com/home-assistant/operating-system/releases)，在最新版本里下载 **`haos_generic-aarch64-<版本号>.qcow2.xz`**，下载后**双击解压**，得到 `.qcow2` 文件
 
-### 第 2 步：安装 Home Assistant
+**② 在 UTM 里新建虚拟机**
+1. 打开 UTM → **新建** → **虚拟化** → **Linux**
+2. 「启动映像」**不选**，直接下一步
+3. 内存 **4096 MB**，CPU **2 核**
+4. 存储随便填，下一步，共享文件夹跳过。名称填 `Home Assistant`，**先不要启动**
+5. 在虚拟机上右键 → **编辑**：
+   - **网络** → 网络模式选 **桥接（高级）**，界面选 **en0**（Wi-Fi）⭐ 这一步决定 HA 能不能找到家里的设备
+   - **驱动器**：删掉刚才自动建的那个硬盘 → **新建 → 导入**，选第 ① 步解压出的 `.qcow2` 文件
+   - 导入后点这个硬盘，**调整大小**到 **32 GB**
+6. 保存，点 ▶️ 启动。等 5 到 10 分钟，屏幕上出现 `homeassistant login:` 就是装好了
+7. 在手机或 Mac 浏览器打开 `http://homeassistant.local:8123`，创建账号
 
-**方式 A：整机安装（官方教程：[Generic x86-64](https://www.home-assistant.io/installation/generic-x86-64)）**
-1. 准备一个 **8GB 以上的 U 盘**
-2. 在另一台电脑上，用 [Balena Etcher](https://etcher.balena.io/) 把 **Ubuntu Live** 写进 U 盘
-3. 旧电脑插上 U 盘开机，按 F12、F2 或 Esc（不同品牌按键不同）选择从 U 盘启动，进入 Ubuntu 的「试用」模式
-4. 在 Ubuntu 里打开浏览器，下载 **haos_generic-x86-64** 镜像，再用自带的「磁盘」工具把它恢复到电脑硬盘
-5. 关机，拔掉 U 盘，**插上网线**（第一次安装建议用网线），开机
-6. 几分钟后，在手机或其他电脑的浏览器里打开 `http://homeassistant.local:8123`
+**③ 让 Mac 24 小时不睡觉**（不做的话，Mac 一睡眠 HA 就停了）
+- **系统设置 → 电池 → 选项**：打开「使用电源适配器且显示器关闭时，防止自动进入睡眠」
+- **系统设置 → 锁定屏幕**：「使用电源适配器且不活跃时关闭显示器」可以设短一点，关屏没关系，只要不睡眠就行
+- ⚠️ **不要合上盖子**，MacBook 合盖就会睡眠
+- **系统设置 → 通用 → 登录项**：加上 UTM；在 UTM 里把虚拟机设为自动启动
+- Mac 一直插着电：打开「电池 → 优化电池充电」，或者装 [AlDente](https://apphousekitchen.com/) 把充电上限设成 80%，保护电池
 
-> 如果电脑开机后找不到系统：进 BIOS，打开 **UEFI** 启动，关闭 **Secure Boot**。
-
-**方式 B：Windows 虚拟机（官方教程：[Windows](https://www.home-assistant.io/installation/windows)）**
-1. 安装 [VirtualBox](https://www.virtualbox.org/)
-2. 下载官方的 **VirtualBox 镜像（.vdi）**，新建虚拟机：类型选 Linux / Other 64-bit，2GB 以上内存，打开 **EFI**
-3. 网卡设成 **桥接网卡**，否则找不到家里的设备
-4. 把 Windows 电源设置改成**永不睡眠**，并让虚拟机随开机自动启动
-
-**装好之后，把本仓库的配置放进去：**
-1. 在 HA 里打开 **设置 → 加载项**，安装 **Samba share** 或 **Studio Code Server**
-2. 把本仓库 `config/` 里的文件复制到 HA 的 `config` 文件夹，原来的同名文件直接覆盖
-3. **开发者工具 → YAML → 检查配置**，没问题就重启
-
-> 电脑设置：在 BIOS 里打开「**通电自动开机**」（Restore on AC Power Loss），停电恢复后会自动开机。笔记本可以合上盖子用，但要设置「合盖不睡眠」（方式 B）。
+**④ 把本仓库的配置放进去**
+1. HA 里打开 **设置 → 加载项 → 加载项商店**，安装 **Samba share**，设置密码后启动
+2. Mac 访达 → **前往 → 连接服务器** → 输入 `smb://homeassistant.local`，打开 `config` 文件夹
+3. 把本仓库 `config/` 里的文件复制进去，同名文件直接覆盖
+4. HA 里打开 **开发者工具 → YAML → 检查配置**，没有报错就点重启
 
 ### 第 3 步：接入你的设备
 
@@ -144,23 +142,29 @@ CareCamPro 是白牌摄像头，没有专门的集成，但大多支持 **ONVIF 
 > 以后加摄像头？告诉我，我帮你改 `cameras.yaml` 和手机页面。
 > 摄像头没有移动侦测传感器的话，实时画面照常能看，只是没有「有人移动」推送。
 
-### 第 4.5 步：闲置平板 → 墙上中控屏 📱
+### 第 4.5 步：华为平板 → 墙上中控屏 📱
 本仓库自带一个横屏中控页面，一屏就能看到家庭模式、天气、暖气、摄像头、扫地机和插座：
 
 <img src="docs/tablet.png" width="600">
 
-**iPad：**
-1. 安装 **Home Assistant** App，登录后在侧边栏打开 **「中控屏」**
-2. 太旧的 iPad 装不了 App 的话，用 Safari 打开 `http://homeassistant.local:8123/home-tablet`，点「分享 → 添加到主屏幕」
-3. **设置 → 辅助功能 → 引导式访问**：开启后，在中控屏页面连按三下侧边键，平板就锁定在这个页面
-4. **设置 → 显示与亮度 → 自动锁定 → 永不**，平板一直插着电
+华为平板**没有 Google 服务**，应用市场里也搜不到 Home Assistant。先看一下系统版本：**设置 → 关于平板 → 软件版本**。
 
-**安卓平板：**
-1. 安装 **Home Assistant** App，或者用 **Fully Kiosk Browser**（专门做墙上屏幕的浏览器：全屏显示、有人走近时自动亮屏）
-2. 打开 `http://homeassistant.local:8123/home-tablet`
-3. 开发者选项里打开「充电时保持唤醒」
+**情况 1：HarmonyOS 2 / 3 / 4（能装安卓 APK）**
+1. 用平板浏览器打开 [F-Droid 上的 Home Assistant 精简版](https://f-droid.org/packages/io.homeassistant.companion.android.minimal/)，下载 APK 并安装（安装时允许「未知来源」）。这个版本不需要 Google 服务
+2. 打开 App，地址填 `http://homeassistant.local:8123`。连不上的话，填主机的 IP，比如 `http://192.168.1.50:8123`
+3. 登录后，在侧边栏打开 **「中控屏」**
+4. 想要更像墙上的面板：改装 **[Fully Kiosk Browser](https://www.fully-kiosk.com/)**（官网下载 APK），主页设成 `http://<HA地址>:8123/home-tablet`。它能全屏、锁定页面，还能用平板摄像头感应有人走近时自动亮屏
 
-> 平板长期插电，电池可能会鼓包。很多安卓平板可以设置「充到 80% 停止」，记得打开。
+**情况 2：HarmonyOS NEXT / 5 及以上（纯血鸿蒙，不能装安卓 App）**
+1. 用华为浏览器打开 `http://<HA地址>:8123/home-tablet`，登录时勾选「保持登录」
+2. 浏览器菜单 → **添加到桌面**，以后从桌面图标打开，就像一个 App
+
+**两种情况都要设置：**
+- **设置 → 显示和亮度 → 休眠 → 永不**
+- 平板一直插电，并在 **设置 → 电池 → 更多电池设置** 里打开「**智能充电模式**」，保护电池
+- 用便宜的墙面平板支架或磁吸支架固定在门口或客厅
+
+> 精简版 App 不支持定位和推送通知。所以**离家、回家判断和报警推送要靠你的手机**，平板只负责显示和控制。
 
 ### 第 5 步：安装手机 App
 1. 在 App Store / Google Play 搜索 **Home Assistant** 并安装
@@ -216,8 +220,8 @@ docker-compose.yml            Docker 部署（备用，Linux / NAS 用）
 
 | 优先级 | 买什么 | 能实现什么 |
 |---|---|---|
-| ✅ 已有 | 闲置电脑当主机，闲置平板当中控屏 | 不用另买 |
-| ② 强烈推荐 | **Zigbee 网关**：Home Assistant Connect ZBT-2（USB，插在主机电脑上） | 接入下面这些便宜、省电、不占 Wi-Fi 的传感器 |
+| ✅ 已有 | MacBook Air 当主机，华为平板当中控屏 | 不用另买 |
+| ② 强烈推荐 | **网络版 Zigbee 网关**，比如 SMLIGHT SLZB-06（插网线，放在家中间位置） | 接入下面这些便宜、省电、不占 Wi-Fi 的传感器。你的 HA 跑在 Mac 虚拟机里，USB 网关要做 USB 直通，容易出问题，网络版最省心 |
 | ③ | **门窗传感器**（Aqara、Third Reality 等 Zigbee 款） | 开门推送到手机；开窗时暖气自动暂停，省暖气费 |
 | ④ | **人体传感器** | 晚上起夜自动开灯；没人自动关灯 |
 | ⑤ | **温湿度传感器**（每个房间一个） | 卧室温度偏低时，暖气按卧室温度调节；冬天太干燥时提醒你 |
